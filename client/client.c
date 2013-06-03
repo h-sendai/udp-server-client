@@ -25,6 +25,7 @@ int get_seq_num(unsigned char *buf, int len)
 {
     unsigned int s;
     s = *(unsigned int *)buf;
+    s = ntohl(s);
 
     return s;
 }
