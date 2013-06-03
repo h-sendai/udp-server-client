@@ -31,8 +31,11 @@ int main(int argc, char *argv[])
     int port = 1234;
     char *server_ip_address;
 
-    while ( (c = getopt(argc, argv, "dp:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dp:")) != -1) {
         switch (c) {
+            case 'c':
+                max_read_counter = get_num(optarg);
+                break;
             case 'p':
                 port = get_num(optarg);
                 break;
