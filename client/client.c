@@ -21,6 +21,14 @@ int usage(void)
     return 0;
 }
 
+int get_seq_num(unsigned char *buf, int len)
+{
+    unsigned int s;
+    s = *(unsigned int *)buf;
+
+    return s;
+}
+
 int main(int argc, char *argv[])
 {
     unsigned char read_buf[64*1024];
@@ -29,6 +37,7 @@ int main(int argc, char *argv[])
     int max_read_counter = 10000;
     int read_counter = 0;
     int port = 1234;
+    int seq_num;
     char *server_ip_address;
 
     while ( (c = getopt(argc, argv, "c:dp:")) != -1) {
@@ -74,6 +83,8 @@ int main(int argc, char *argv[])
         if (n < 0) {
             err(1, "read");
         }
+        seq_num = get_seq_num(read_buf, n);
+        printf("%d\n", seq_num);
         read_counter ++;
     }
         
