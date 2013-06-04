@@ -13,6 +13,7 @@
 #include "my_socket.h"
 #include "readn.h"
 #include "set_timer.h"
+#include "flow_ctrl_pause.h"
 
 int usage(void)
 {
@@ -40,11 +41,15 @@ int main(int argc, char *argv[])
     int port = 1234;
     int seq_num;
     char *server_ip_address;
+    char *if_name = "eth0";
 
-    while ( (c = getopt(argc, argv, "c:dp:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:di:p:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
+                break;
+            case 'i':
+                if_name = optarg;
                 break;
             case 'p':
                 port = get_num(optarg);
@@ -79,6 +84,11 @@ int main(int argc, char *argv[])
     for ( ; ; ) {
         if (read_counter == max_read_counter) {
             break;
+        }
+
+        if ((read_counter % 1000) == 0) {
+            // max 3rd argument is 65535 (2 bytes value)
+            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", 100);
         }
         n = read(sockfd, read_buf, sizeof(read_buf));
         if (n < 0) {

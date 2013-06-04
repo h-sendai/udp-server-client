@@ -9,7 +9,9 @@ OBJS += host_info.o
 OBJS += my_signal.o
 OBJS += my_socket.o
 OBJS += readn.o
-OBJS += set_timer.c
+OBJS += set_timer.o
+OBJS += flow_ctrl_pause.o
+
 OBJS += $(PROG).o
 
 $(PROG): $(OBJS)
