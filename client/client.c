@@ -16,11 +16,19 @@
 #include "flow_ctrl_pause.h"
 
 int debug = 0;
+volatile sig_atomic_t has_alarm = 0;
+
 int usage(void)
 {
     fprintf(stderr, "Usage: ./client ip_address [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval]\n");
     
     return 0;
+}
+
+void sig_alarm(int signo)
+{
+    has_alarm = 1;
+    return;
 }
 
 int get_seq_num(unsigned char *buf, int len)
@@ -86,6 +94,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    my_signal(SIGALRM, sig_alarm);
+    set_timer(2, 0, 2, 0);
+    //set_timer(0, 500000, 0, 500000);
+
     if (debug && do_flow_ctrl) {
         fprintf(stderr, "flow_ctrl_value:    %d\n", flow_ctrl_value);
         fprintf(stderr, "flow_ctrl_interval: %d\n", flow_ctrl_interval);
@@ -113,23 +125,30 @@ int main(int argc, char *argv[])
             //break;
         }
 
-        if (do_flow_ctrl) {
-            if ((read_counter % flow_ctrl_interval) == 0) {
-                if (debug > 1) {
-                    fprintf(stderr, "flow_control\n");
-                }
-
-                // max 3rd argument is 65535 (2 bytes value)
-                flow_ctrl_pause(if_name, "01:80:c2:00:00:01", flow_ctrl_value);
-            }
+        if (has_alarm && do_flow_ctrl) {
+            has_alarm = 0;
+            fprintf(stderr, "send pause frame\n");
+        //if ((read_counter % 1000) == 0) {
+            // max 3rd argument is 65535 (2 bytes value)
+            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", flow_ctrl_value);
         }
 
+AGAIN:
         n = read(sockfd, read_buf, sizeof(read_buf));
         if (n < 0) {
-            err(1, "read");
+            if (errno == EINTR) {
+                goto AGAIN;
+            }
+            else {
+                err(1, "read");
+            }
         }
         seq_num = get_seq_num(read_buf, n);
-        printf("%d\n", seq_num);
+        //printf("%d\n", seq_num);
+        if (read_counter != seq_num) {
+            fprintf(stderr, "seq_num error at seq_num: %d\n", seq_num);
+            exit(0);
+        }
         read_counter ++;
     }
         
