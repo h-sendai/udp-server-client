@@ -18,7 +18,7 @@
 int debug = 0;
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-p port]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval]\n");
     
     return 0;
 }
@@ -42,21 +42,38 @@ int main(int argc, char *argv[])
     int port = 1234;
     int seq_num;
     char *server_ip_address;
-    char *if_name = "eth0";
+    /* flow_ctrl variables */
+    char *if_name          = "eth0";
+    int do_flow_ctrl       = 0;
+    int flow_ctrl_interval = 1000;
+    int flow_ctrl_value    = 65535;
 
-    while ( (c = getopt(argc, argv, "c:di:p:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dfi:p:F:I:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
                 break;
             case 'd':
-                debug = 1;
+                debug++;
+                break;
+            case 'f':
+                do_flow_ctrl = 1;
                 break;
             case 'i':
                 if_name = optarg;
                 break;
             case 'p':
                 port = get_num(optarg);
+                break;
+            case 'F':
+                flow_ctrl_value = get_num(optarg);
+                if (flow_ctrl_value < 0 || flow_ctrl_value > 65535) {
+                    fprintf(stderr, "Too large flow_ctrl_value (0 - 65535)\n");
+                    exit(1);
+                }
+                break;
+            case 'I':
+                flow_ctrl_interval = get_num(optarg);
                 break;
             default:
                 break;
@@ -67,6 +84,11 @@ int main(int argc, char *argv[])
     if (argc != 1) {
         usage();
         exit(1);
+    }
+
+    if (debug && do_flow_ctrl) {
+        fprintf(stderr, "flow_ctrl_value:    %d\n", flow_ctrl_value);
+        fprintf(stderr, "flow_ctrl_interval: %d\n", flow_ctrl_interval);
     }
 
     server_ip_address = argv[0];
@@ -87,17 +109,21 @@ int main(int argc, char *argv[])
 
     for ( ; ; ) {
         if (read_counter == max_read_counter) {
-            break;
+            exit(0);
+            //break;
         }
 
-        if ((read_counter % 1000) == 0) {
-            if (debug) {
-                fprintf(stderr, "flow_control\n");
+        if (do_flow_ctrl) {
+            if ((read_counter % flow_ctrl_interval) == 0) {
+                if (debug > 1) {
+                    fprintf(stderr, "flow_control\n");
+                }
+
+                // max 3rd argument is 65535 (2 bytes value)
+                flow_ctrl_pause(if_name, "01:80:c2:00:00:01", flow_ctrl_value);
             }
-
-            // max 3rd argument is 65535 (2 bytes value)
-            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", 65535);
         }
+
         n = read(sockfd, read_buf, sizeof(read_buf));
         if (n < 0) {
             err(1, "read");
