@@ -15,6 +15,7 @@
 #include "set_timer.h"
 #include "flow_ctrl_pause.h"
 
+int debug = 0;
 int usage(void)
 {
     fprintf(stderr, "Usage: ./client ip_address [-p port]\n");
@@ -47,6 +48,9 @@ int main(int argc, char *argv[])
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
+                break;
+            case 'd':
+                debug = 1;
                 break;
             case 'i':
                 if_name = optarg;
@@ -87,8 +91,12 @@ int main(int argc, char *argv[])
         }
 
         if ((read_counter % 1000) == 0) {
+            if (debug) {
+                fprintf(stderr, "flow_control\n");
+            }
+
             // max 3rd argument is 65535 (2 bytes value)
-            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", 100);
+            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", 65535);
         }
         n = read(sockfd, read_buf, sizeof(read_buf));
         if (n < 0) {
