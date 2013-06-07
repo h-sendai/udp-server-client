@@ -20,7 +20,7 @@ volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
     
     return 0;
 }
@@ -51,12 +51,13 @@ int main(int argc, char *argv[])
     int seq_num;
     char *server_ip_address;
     /* flow_ctrl variables */
-    char *if_name          = "eth0";
-    int do_flow_ctrl       = 0;
-    int flow_ctrl_interval = 1000;
+    char *if_name              = "eth0";
+    int do_flow_ctrl           = 0;
+    int flow_ctrl_interval_sec = 2;
     int flow_ctrl_value    = 65535;
+    int ignore_seq_num_error = 0;
 
-    while ( (c = getopt(argc, argv, "c:dfi:p:F:I:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dfi:p:F:GI:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
@@ -80,8 +81,11 @@ int main(int argc, char *argv[])
                     exit(1);
                 }
                 break;
+            case 'G':
+                ignore_seq_num_error = 1;
+                break;
             case 'I':
-                flow_ctrl_interval = get_num(optarg);
+                flow_ctrl_interval_sec = get_num(optarg);
                 break;
             default:
                 break;
@@ -94,13 +98,13 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    my_signal(SIGALRM, sig_alarm);
-    set_timer(2, 0, 2, 0);
-    //set_timer(0, 500000, 0, 500000);
-
-    if (debug && do_flow_ctrl) {
-        fprintf(stderr, "flow_ctrl_value:    %d\n", flow_ctrl_value);
-        fprintf(stderr, "flow_ctrl_interval: %d\n", flow_ctrl_interval);
+    if (do_flow_ctrl) {
+        my_signal(SIGALRM, sig_alarm);
+        set_timer(flow_ctrl_interval_sec, 0, flow_ctrl_interval_sec, 0);
+        if (debug) {
+            fprintf(stderr, "flow_ctrl_value:        %d\n", flow_ctrl_value);
+            fprintf(stderr, "flow_ctrl_interval_sec: %d\n", flow_ctrl_interval_sec);
+        }
     }
 
     server_ip_address = argv[0];
@@ -122,14 +126,11 @@ int main(int argc, char *argv[])
     for ( ; ; ) {
         if (read_counter == max_read_counter) {
             exit(0);
-            //break;
         }
 
-        if (has_alarm && do_flow_ctrl) {
+        if (do_flow_ctrl && has_alarm) {
             has_alarm = 0;
             fprintf(stderr, "send pause frame\n");
-        //if ((read_counter % 1000) == 0) {
-            // max 3rd argument is 65535 (2 bytes value)
             flow_ctrl_pause(if_name, "01:80:c2:00:00:01", flow_ctrl_value);
         }
 
@@ -144,10 +145,15 @@ AGAIN:
             }
         }
         seq_num = get_seq_num(read_buf, n);
-        //printf("%d\n", seq_num);
         if (read_counter != seq_num) {
-            fprintf(stderr, "seq_num error at seq_num: %d\n", seq_num);
-            exit(0);
+            fprintf(stderr, "seq_num error at seq_num: %d read_counter: %d\n",
+                seq_num, read_counter);
+            if (ignore_seq_num_error) {
+                read_counter = seq_num;
+            }
+            else {
+                exit(0);
+            }
         }
         read_counter ++;
     }
