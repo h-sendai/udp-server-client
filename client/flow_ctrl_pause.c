@@ -130,6 +130,11 @@ int flow_ctrl_pause(char *ifname, char *mac_address, int pause_time)
         return -1;
     }
 
+    if (close(sockfd) < 0) {
+        warn("close for pause packet socket");
+        return -1;
+    }
+
     return 0;
 }
 
