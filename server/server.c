@@ -13,6 +13,7 @@
 #include "my_socket.h"
 #include "readn.h"
 #include "set_timer.h"
+#include "bz_usleep.h"
 
 int main(int argc, char *argv[])
 {
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
         }
         write_counter ++;
         if (usleep_time > 0) {
-            usleep(usleep_time);
+            bz_usleep(usleep_time);
         }
     }
         
