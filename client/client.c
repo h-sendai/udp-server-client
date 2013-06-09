@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
     int flow_ctrl_interval_sec = 2;
     int flow_ctrl_value    = 65535;
     int ignore_seq_num_error = 0;
+    int rcvbuf = 0;
 
     while ( (c = getopt(argc, argv, "c:dfi:p:F:GI:")) != -1) {
         switch (c) {
@@ -116,6 +117,14 @@ int main(int argc, char *argv[])
 
     if (connect_udp(sockfd, server_ip_address, port) < 0) {
         errx(1, "connect_udp");
+    }
+    
+    if (set_so_rcvbuf(sockfd, 8*1024*1024) < 0) {
+        errx(1, "set_so_rcvbuf");
+    }
+    if (debug) {
+        rcvbuf = get_so_rcvbuf(sockfd);
+        fprintf(stderr, "rcvbuf: %d\n", rcvbuf);
     }
     
     n = write(sockfd, write_buf, sizeof(write_buf));
