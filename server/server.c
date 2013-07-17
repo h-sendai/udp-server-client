@@ -27,8 +27,9 @@ int main(int argc, char *argv[])
     int write_counter = 0;
     int max_write_counter = 10000;
     int usleep_time = 0;
+    int use_bzsleep = 0;
 
-    while ( (c = getopt(argc, argv, "b:c:s:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:s:z:")) != -1) {
         switch (c) {
             case 'b':
                 write_buf_size = get_num(optarg);
@@ -38,6 +39,10 @@ int main(int argc, char *argv[])
                 break;
             case 's':
                 usleep_time = get_num(optarg);
+                break;
+            case 'z':
+                usleep_time = get_num(optarg);
+                use_bzsleep = 1;
                 break;
             default:
                 break;
@@ -83,7 +88,12 @@ int main(int argc, char *argv[])
         }
         write_counter ++;
         if (usleep_time > 0) {
-            bz_usleep(usleep_time);
+            if (use_bzsleep) {
+                bz_usleep(usleep_time);
+            }
+            else {
+                usleep(usleep_time);
+            }
         }
     }
         
