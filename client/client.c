@@ -20,7 +20,7 @@ volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
     
     return 0;
 }
