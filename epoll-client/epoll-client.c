@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 	int n_server;
     int best_effort = 0;
     int recv_low_watermark = 0;
+    unsigned write_buf[16];
 
 	int epfd;
 	int nfds;
@@ -153,7 +154,7 @@ int main(int argc, char *argv[])
 	//}
 
 	for (p = host_list; p != NULL; p = p->next) {
-		if ( (p->sockfd = tcp_socket()) < 0) {
+		if ( (p->sockfd = udp_socket()) < 0) {
 			errx(1, "socket create fail");
 		}
 	}
@@ -171,7 +172,7 @@ int main(int argc, char *argv[])
     }
 
 	for (p = host_list; p != NULL; p = p->next) {
-		if (connect_tcp(p->sockfd, p->ip_address, p->port) < 0) {
+		if (connect_udp(p->sockfd, p->ip_address, p->port) < 0) {
 			errx(1, "connect to %s fail", p->ip_address);
 		}
 	}
@@ -196,6 +197,13 @@ int main(int argc, char *argv[])
 	}
 
     gettimeofday(&start_time, NULL);
+
+	for (p = host_list; p != NULL; p = p->next) {
+        if (write(p->sockfd, write_buf, sizeof(write_buf)) < 0) {
+            err(1, "write to server %s port %d fail", p->ip_address, p->port);
+        }
+    }
+
 	for ( ; ; ) {
 		nfds = epoll_wait(epfd, ev_ret, n_server, timeout * 1000);
 		if (nfds < 0) {
