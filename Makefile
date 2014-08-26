@@ -1,5 +1,6 @@
 SUBDIRS += client
 SUBDIRS += server
+SUBDIRS += epoll-client
 
 .PHONY: $(SUBDIRS)
 

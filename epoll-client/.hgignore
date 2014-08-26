@@ -1,0 +1,8 @@
+syntax: glob
+.depend
+*.o
+*.d
+*~
+sample
+log*
+data

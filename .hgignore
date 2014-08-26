@@ -5,4 +5,5 @@ syntax: glob
 *~
 server/server
 client/client
+epoll-client/epoll-client
 data/*
