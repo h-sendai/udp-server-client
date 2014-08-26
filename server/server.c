@@ -28,14 +28,18 @@ int main(int argc, char *argv[])
     int max_write_counter = 10000;
     int usleep_time = 0;
     int use_bzsleep = 0;
+    int port = 1234;
 
-    while ( (c = getopt(argc, argv, "b:c:s:z:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:p:s:z:")) != -1) {
         switch (c) {
             case 'b':
                 write_buf_size = get_num(optarg);
                 break;
             case 'c':
                 max_write_counter = get_num(optarg);
+                break;
+            case 'p':
+                port = get_num(optarg);
                 break;
             case 's':
                 usleep_time = get_num(optarg);
@@ -60,7 +64,7 @@ int main(int argc, char *argv[])
         errx(1, "socket");
     }
 
-    if (my_bind(sockfd, "0.0.0.0", 1234) < 0) {
+    if (my_bind(sockfd, "0.0.0.0", port) < 0) {
         errx(1, "bind");
     }
     
