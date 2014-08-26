@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 {
 	int i, n, ch;
 	host_info *p;
-	int timeout = 2;
+	int timeout = 1;
 	int n_server;
     int best_effort = 0;
     int recv_low_watermark = 0;
@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
 	struct epoll_event ev, *ev_ret;
     int read_size = 1460;
     int so_rcvbuf = 0;
-    int enable_quick_ack = 0;
 
 	while ( (ch = getopt(argc, argv, "ab:dqr:SL:")) != -1) {
 		switch (ch) {
@@ -106,9 +105,6 @@ int main(int argc, char *argv[])
                 break;
 			case 'd':
 				debug = 1;
-				break;
-			case 'q':
-				enable_quick_ack = 1;
 				break;
             case 'r':
                 so_rcvbuf = get_num(optarg);
@@ -221,18 +217,8 @@ int main(int argc, char *argv[])
 
 		for (i = 0; i < nfds; i++) {
 			p = ev_ret[i].data.ptr;
-            if (best_effort) {
-                if (enable_quick_ack) {
-                    set_so_quickack(p->sockfd);
-                }
-			    n = read(p->sockfd, p->buf, read_size);
-            }
-            else {
-                if (enable_quick_ack) {
-                    set_so_quickack(p->sockfd);
-                }
-			    n = readn(p->sockfd, p->buf, read_size);
-            }
+			n = read(p->sockfd, p->buf, read_size);
+
 			if (n < 0) {
 				err(1, "read error");
 			}
