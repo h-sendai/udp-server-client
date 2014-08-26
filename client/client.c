@@ -136,10 +136,12 @@ int main(int argc, char *argv[])
         if (read_counter == max_read_counter) {
             exit(0);
         }
-        if (read_counter % 1000 == 0) {
-            int nbytes;
-            ioctl(sockfd, FIONREAD, &nbytes);
-            fprintf(stderr, "socket buffer: %d bytes\n", nbytes);
+        if (debug) {
+            if (read_counter % 1000 == 0) {
+                int nbytes;
+                ioctl(sockfd, FIONREAD, &nbytes);
+                fprintf(stderr, "socket buffer: %d bytes\n", nbytes);
+            }
         }
 
         if (do_flow_ctrl && has_alarm) {
