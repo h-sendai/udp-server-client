@@ -235,6 +235,7 @@ int main(int argc, char *argv[])
 			else {
 				p->read_bytes += n;
 				p->read_count ++;
+                /*
                 int m = n/1460;
                 if (m > 32) {
                     p->read_bytes_histo[33] ++;
@@ -242,6 +243,7 @@ int main(int argc, char *argv[])
                 else {
                     p->read_bytes_histo[m] ++;
                 }
+                */
 			}
 		}
 	}

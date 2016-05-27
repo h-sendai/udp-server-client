@@ -80,17 +80,20 @@ int main(int argc, char *argv[])
     }
     
     for ( ; ; ) {
+        int k;
         if (write_counter == max_write_counter) {
             break;
         }
 
-        int x = htonl(write_counter);
-        memcpy(&write_buf[0], &x, sizeof(int));
-        m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
-        if (m < 0) {
-            err(1, "sendto");
+        for (k = 0; k < 4; k ++) {
+            int x = htonl(write_counter);
+            memcpy(&write_buf[0], &x, sizeof(int));
+            m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
+            if (m < 0) {
+                err(1, "sendto");
+            }
+            write_counter ++;
         }
-        write_counter ++;
         if (usleep_time > 0) {
             if (use_bzsleep) {
                 bz_usleep(usleep_time);
