@@ -1,7 +1,7 @@
 udp server
-port 1234 ��client�������³��recvfrom���Ԥġ�
-���饤����Ȥ�����³�����ä����ȤϤɤ�ɤ�udp packet���ꤲ�롣
+port 1234 でclientからの接続をrecvfromで待つ。
+クライアントから接続があったあとはどんどんudp packetを投げる。
 
 udp client
-server�˺ǽ�1��sendto�ǥ�å����������롣
-���ȤϤɤ�ɤ�rcvffrom���ɤࡣ
+serverに最初1回sendtoでメッセージを送る。
+あとはどんどんrcvffromで読む。
