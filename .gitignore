@@ -1,0 +1,7 @@
+.depend
+*.o
+*.d
+*~
+client/client
+epoll-client/epoll-client
+server/server
