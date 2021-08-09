@@ -1,5 +1,6 @@
 PROG = epoll-client
-CFLAGS = -std=c99 -g -O2 -Wall -D_BSD_SOURCE=1 -D_POSIX_SOURCE
+CFLAGS = -std=gnu99 -g -O2
+# -Wall -D_BSD_SOURCE=1 -D_POSIX_SOURCE
 
 all: ${PROG}
 
