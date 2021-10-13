@@ -77,52 +77,63 @@ int main(int argc, char *argv[])
     memset(&cliaddr, 0, sizeof(cliaddr));
     memset(&servaddr, 0, sizeof(servaddr));
 
-    //int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    int sockfd = udp_socket();
-    if (sockfd < 0) {
-        errx(1, "socket");
-    }
-
-    if (my_bind(sockfd, "0.0.0.0", port) < 0) {
-        errx(1, "bind");
-    }
-    
     write_buf = malloc(write_buf_size);
     if (write_buf == NULL) {
         err(1, "malloc");
     }
 
-    len = sizeof(cliaddr);
-    n = recvfrom(sockfd, read_buf, sizeof(read_buf), 0, (struct sockaddr *)&cliaddr, &len);
-    if (n < 0) {
-        err(1, "recvfrom");
-    }
-    
-    debug_print(stderr, "max_write_counter: %d\n", max_write_counter);
-
-    for ( ; ; ) {
-        int k;
-        if (write_counter == max_write_counter) {
-            break;
+    /* iterative server.  after sending all udp, wait data from client again */
+    for ( ; ; )  {
+        int sockfd = udp_socket();
+        if (sockfd < 0) {
+            errx(1, "socket");
         }
 
-        for (k = 0; k < 4; k ++) {
-            int x = htonl(write_counter);
-            memcpy(&write_buf[0], &x, sizeof(int));
-            m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
-            if (m < 0) {
-                err(1, "sendto");
-            }
-            write_counter ++;
+        if (my_bind(sockfd, "0.0.0.0", port) < 0) {
+            errx(1, "bind");
         }
-        if (usleep_time > 0) {
-            if (use_bzsleep) {
-                bz_usleep(usleep_time);
+
+        len = sizeof(cliaddr);
+        n = recvfrom(sockfd, read_buf, sizeof(read_buf), 0, (struct sockaddr *)&cliaddr, &len);
+        if (n < 0) {
+            err(1, "recvfrom");
+        }
+        char remote_ip[32];
+        inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
+        debug_print(stderr, "access from: %s\n", remote_ip);
+        debug_print(stderr, "recvfrom() returns\n");
+        debug_print(stderr, "max_write_counter: %d\n", max_write_counter);
+
+        for ( ; ; ) {
+            int k;
+            if (write_counter == max_write_counter) {
+                break;
             }
-            else {
-                usleep(usleep_time);
+
+            for (k = 0; k < 4; k ++) {
+                int x = htonl(write_counter);
+                memcpy(&write_buf[0], &x, sizeof(int));
+                m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
+                if (m < 0) {
+                    err(1, "sendto");
+                }
+                write_counter ++;
+            }
+            if (usleep_time > 0) {
+                if (use_bzsleep) {
+                    bz_usleep(usleep_time);
+                }
+                else {
+                    usleep(usleep_time);
+                }
             }
         }
+        debug_print(stderr, "write done: max_write_counter: %d\n", max_write_counter);
+        
+        if (close(sockfd) < 0) {
+            err(1, "close");
+        }
+        write_counter = 0;
     }
         
     return 0;
