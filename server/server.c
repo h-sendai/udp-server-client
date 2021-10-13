@@ -15,6 +15,16 @@
 #include "set_timer.h"
 #include "bz_usleep.h"
 
+int usage()
+{
+    char msg[] = "Usage: server [-b bufsize] [-c max_write_counter] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
+                 "default bufsize: 1024 bytes.  Allow k (kilo), m (mega) suffix\n"
+                 "default port: 1234\n";
+    fprintf(stderr, "%s", msg);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     unsigned char read_buf[64*1024];
@@ -30,7 +40,7 @@ int main(int argc, char *argv[])
     int use_bzsleep = 0;
     int port = 1234;
 
-    while ( (c = getopt(argc, argv, "b:c:p:s:z:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:hp:s:z:")) != -1) {
         switch (c) {
             case 'b':
                 write_buf_size = get_num(optarg);
@@ -38,6 +48,9 @@ int main(int argc, char *argv[])
             case 'c':
                 max_write_counter = get_num(optarg);
                 break;
+            case 'h':
+                usage();
+                exit(0);
             case 'p':
                 port = get_num(optarg);
                 break;
