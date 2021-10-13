@@ -14,10 +14,13 @@
 #include "readn.h"
 #include "set_timer.h"
 #include "bz_usleep.h"
+#include "debug_print.h"
+
+int debug = 0;
 
 int usage()
 {
-    char msg[] = "Usage: server [-b bufsize] [-c max_write_counter] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
+    char msg[] = "Usage: server [-d] [-b bufsize] [-c max_write_counter] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
                  "default bufsize: 1024 bytes.  Allow k (kilo), m (mega) suffix\n"
                  "default port: 1234\n";
     fprintf(stderr, "%s", msg);
@@ -40,8 +43,11 @@ int main(int argc, char *argv[])
     int use_bzsleep = 0;
     int port = 1234;
 
-    while ( (c = getopt(argc, argv, "b:c:hp:s:z:")) != -1) {
+    while ( (c = getopt(argc, argv, "db:c:hp:s:z:")) != -1) {
         switch (c) {
+            case 'd':
+                debug = 1;
+                break;
             case 'b':
                 write_buf_size = get_num(optarg);
                 break;
@@ -92,6 +98,8 @@ int main(int argc, char *argv[])
         err(1, "recvfrom");
     }
     
+    debug_print(stderr, "max_write_counter: %d\n", max_write_counter);
+
     for ( ; ; ) {
         int k;
         if (write_counter == max_write_counter) {
