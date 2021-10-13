@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     int ignore_seq_num_error = 0;
     int rcvbuf = 0;
 
-    while ( (c = getopt(argc, argv, "c:dfi:p:F:GI:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dfhi:p:F:GI:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
@@ -69,6 +69,9 @@ int main(int argc, char *argv[])
             case 'f':
                 do_flow_ctrl = 1;
                 break;
+            case 'h':
+                usage();
+                exit(0);
             case 'i':
                 if_name = optarg;
                 break;
