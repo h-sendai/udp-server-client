@@ -15,6 +15,7 @@
 #include "set_timer.h"
 #include "bz_usleep.h"
 #include "debug_print.h"
+#include "logUtil.h"
 
 int debug = 0;
 
@@ -100,9 +101,8 @@ int main(int argc, char *argv[])
         }
         char remote_ip[32];
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
-        debug_print(stderr, "access from: %s\n", remote_ip);
+        fprintfwt(stderr, "access from: %s.  max_write_counter: %d\n", remote_ip, max_write_counter);
         debug_print(stderr, "recvfrom() returns\n");
-        debug_print(stderr, "max_write_counter: %d\n", max_write_counter);
 
         for ( ; ; ) {
             int k;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        debug_print(stderr, "write done: max_write_counter: %d\n", max_write_counter);
+        fprintfwt(stderr, "write done: max_write_counter: %d\n", max_write_counter);
         
         if (close(sockfd) < 0) {
             err(1, "close");
