@@ -30,11 +30,10 @@ void sig_alarm(int signo)
     return;
 }
 
-int get_seq_num(unsigned char *buf, int len)
+unsigned long get_seq_num(unsigned char *buf, int len)
 {
-    unsigned int s;
-    s = *(unsigned int *)buf;
-    s = ntohl(s);
+    unsigned long s;
+    s = *(unsigned long *)buf;
 
     return s;
 }

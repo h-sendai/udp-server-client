@@ -31,11 +31,10 @@ void sig_alarm(int signo)
     return;
 }
 
-int get_seq_num(unsigned char *buf, int len)
+unsigned long get_seq_num(unsigned char *buf, int len)
 {
-    unsigned int s;
-    s = *(unsigned int *)buf;
-    s = ntohl(s);
+    unsigned long s;
+    s = *(unsigned long *)buf;
 
     return s;
 }
@@ -48,7 +47,7 @@ int main(int argc, char *argv[])
     unsigned long max_read_counter = 10000;
     unsigned read_counter = 0;
     int port = 1234;
-    int seq_num;
+    unsigned long seq_num;
     char *server_ip_address;
     /* flow_ctrl variables */
     char *if_name              = "eth0";
@@ -171,7 +170,7 @@ AGAIN:
         }
         seq_num = get_seq_num(read_buf, n);
         if (read_counter != seq_num) {
-            fprintf(stderr, "seq_num error at seq_num: %d read_counter: %d\n",
+            fprintf(stderr, "seq_num error at seq_num: %ld read_counter: %d\n",
                 seq_num, read_counter);
             if (ignore_seq_num_error) {
                 read_counter = seq_num;

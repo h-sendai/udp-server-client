@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
     struct sockaddr_in cliaddr;
     struct sockaddr_in servaddr;
     socklen_t len;
-    unsigned write_counter = 0;
-    unsigned max_write_counter = 10000;
+    unsigned long write_counter = 0;
+    unsigned long max_write_counter = 10000;
     int usleep_time = 0;
     int use_bzsleep = 0;
     int port = 1234;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
         }
         char remote_ip[32];
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
-        fprintfwt(stderr, "access from: %s.  max_write_counter: %d\n", remote_ip, max_write_counter);
+        fprintfwt(stderr, "access from: %s.  max_write_counter: %ld\n", remote_ip, max_write_counter);
         debug_print(stderr, "recvfrom() returns\n");
 
         for ( ; ; ) {
@@ -110,15 +110,15 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            for (k = 0; k < 4; k ++) {
-                int x = htonl(write_counter);
-                memcpy(&write_buf[0], &x, sizeof(int));
+            //for (k = 0; k < 4; k ++) {
+                //int x = htonl(write_counter);
+                memcpy(&write_buf[0], &write_counter, sizeof(unsigned long));
                 m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
                 if (m < 0) {
                     err(1, "sendto");
                 }
                 write_counter ++;
-            }
+            //}
             if (usleep_time > 0) {
                 if (use_bzsleep) {
                     bz_usleep(usleep_time);
