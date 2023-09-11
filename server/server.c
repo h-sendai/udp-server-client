@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
     struct sockaddr_in cliaddr;
     struct sockaddr_in servaddr;
     socklen_t len;
-    int write_counter = 0;
-    int max_write_counter = 10000;
+    unsigned write_counter = 0;
+    unsigned max_write_counter = 10000;
     int usleep_time = 0;
     int use_bzsleep = 0;
     int port = 1234;

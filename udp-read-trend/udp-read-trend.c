@@ -13,14 +13,13 @@
 #include "my_socket.h"
 #include "readn.h"
 #include "set_timer.h"
-#include "flow_ctrl_pause.h"
 
 int debug = 0;
 volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-r rcvbuf] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-r rcvbuf] [-f]\n");
     
     return 0;
 }
@@ -46,19 +45,13 @@ int main(int argc, char *argv[])
     unsigned char write_buf[16];
     int c, n;
     unsigned long max_read_counter = 10000;
-    unsigned read_counter = 0;
+    unsigned long total_read_counter = 0;
     int port = 1234;
-    int seq_num;
+    unsigned long seq_num;
     char *server_ip_address;
-    /* flow_ctrl variables */
-    char *if_name              = "eth0";
-    int do_flow_ctrl           = 0;
-    int flow_ctrl_interval_sec = 2;
-    int flow_ctrl_value    = 65535;
-    int ignore_seq_num_error = 0;
     int so_rcvbuf = -1;
 
-    while ( (c = getopt(argc, argv, "c:dfhi:p:r:F:GI:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dhp:r:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
@@ -66,33 +59,14 @@ int main(int argc, char *argv[])
             case 'd':
                 debug++;
                 break;
-            case 'f':
-                do_flow_ctrl = 1;
-                break;
             case 'h':
                 usage();
                 exit(0);
-            case 'i':
-                if_name = optarg;
-                break;
             case 'p':
                 port = get_num(optarg);
                 break;
             case 'r':
                 so_rcvbuf = get_num(optarg);
-                break;
-            case 'F':
-                flow_ctrl_value = get_num(optarg);
-                if (flow_ctrl_value < 0 || flow_ctrl_value > 65535) {
-                    fprintf(stderr, "Too large flow_ctrl_value (0 - 65535)\n");
-                    exit(1);
-                }
-                break;
-            case 'G':
-                ignore_seq_num_error = 1;
-                break;
-            case 'I':
-                flow_ctrl_interval_sec = get_num(optarg);
                 break;
             default:
                 break;
@@ -103,15 +77,6 @@ int main(int argc, char *argv[])
     if (argc != 1) {
         usage();
         exit(1);
-    }
-
-    if (do_flow_ctrl) {
-        my_signal(SIGALRM, sig_alarm);
-        set_timer(flow_ctrl_interval_sec, 0, flow_ctrl_interval_sec, 0);
-        if (debug) {
-            fprintf(stderr, "flow_ctrl_value:        %d\n", flow_ctrl_value);
-            fprintf(stderr, "flow_ctrl_interval_sec: %d\n", flow_ctrl_interval_sec);
-        }
     }
 
     server_ip_address = argv[0];
@@ -141,22 +106,44 @@ int main(int argc, char *argv[])
         err(1, "write for 1st packet");
     }
 
+    int interval_read_counter = 0;
+    int interval_read_bytes   = 0;
+    int interval_drop_counter = 0;
+
+    my_signal(SIGALRM, sig_alarm);
+    set_timer(1, 0, 1, 0);
+    struct timeval start, now, elapsed, prev, interval;
+
+    gettimeofday(&start, NULL);
+    prev = start;
     for ( ; ; ) {
-        if (read_counter == max_read_counter) {
+        if (total_read_counter >= max_read_counter) {
+            /* >=: in case of drop */
             exit(0);
         }
-        if (debug) {
-            if (read_counter % 1000 == 0) {
-                int nbytes;
-                ioctl(sockfd, FIONREAD, &nbytes);
-                fprintf(stderr, "socket buffer: %d bytes\n", nbytes);
-            }
-        }
 
-        if (do_flow_ctrl && has_alarm) {
+        if (has_alarm) {
             has_alarm = 0;
-            fprintf(stderr, "send pause frame\n");
-            flow_ctrl_pause(if_name, "01:80:c2:00:00:01", flow_ctrl_value);
+
+            gettimeofday(&now, NULL);
+            timersub(&now, &start, &elapsed);
+            timersub(&now, &prev,  &interval);
+            prev = now;
+
+            double interval_sec = interval.tv_sec + 0.000001*interval.tv_usec;
+            double rate_Gbps = 8.0*(double)interval_read_bytes / interval_sec /1000.0/1000.0/1000.0;
+
+            fprintf(stderr, "%ld.%06ld %ld.%06ld read: %d bytes %.3f Gbps read_count: %d drop_count: %d\n",
+                elapsed.tv_sec, elapsed.tv_usec,
+                interval.tv_sec, interval.tv_usec,
+                interval_read_bytes, 
+                rate_Gbps,
+                interval_read_counter, interval_drop_counter);
+
+            interval_read_counter = 0;
+            interval_read_bytes   = 0;
+            interval_drop_counter = 0;
+            
         }
 
 AGAIN:
@@ -169,18 +156,18 @@ AGAIN:
                 err(1, "read");
             }
         }
+        interval_read_bytes += n;
         seq_num = get_seq_num(read_buf, n);
-        if (read_counter != seq_num) {
-            fprintf(stderr, "seq_num error at seq_num: %d read_counter: %d\n",
-                seq_num, read_counter);
-            if (ignore_seq_num_error) {
-                read_counter = seq_num;
+        if (total_read_counter != seq_num) {
+            if (debug) {
+                fprintf(stderr, "seq_num error at seq_num: %ld total_read_counter: %ld\n",
+                    seq_num, total_read_counter);
             }
-            else {
-                exit(0);
-            }
+            interval_drop_counter += (seq_num - total_read_counter);
+            total_read_counter = seq_num;
         }
-        read_counter ++;
+        total_read_counter ++;
+        interval_read_counter ++;
     }
         
     return 0;
