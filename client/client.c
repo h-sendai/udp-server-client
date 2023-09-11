@@ -20,7 +20,7 @@ volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-r rcvbuf] [-f] [-F flow_ctrl_valie] [-I flow_control_interval] [-G]\n");
     
     return 0;
 }
@@ -56,9 +56,9 @@ int main(int argc, char *argv[])
     int flow_ctrl_interval_sec = 2;
     int flow_ctrl_value    = 65535;
     int ignore_seq_num_error = 0;
-    int rcvbuf = 0;
+    int so_rcvbuf = -1;
 
-    while ( (c = getopt(argc, argv, "c:dfhi:p:F:GI:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dfhi:p:r:F:GI:")) != -1) {
         switch (c) {
             case 'c':
                 max_read_counter = get_num(optarg);
@@ -77,6 +77,9 @@ int main(int argc, char *argv[])
                 break;
             case 'p':
                 port = get_num(optarg);
+                break;
+            case 'r':
+                so_rcvbuf = get_num(optarg);
                 break;
             case 'F':
                 flow_ctrl_value = get_num(optarg);
@@ -122,11 +125,14 @@ int main(int argc, char *argv[])
         errx(1, "connect_udp");
     }
     
-    if (set_so_rcvbuf(sockfd, 8*1024*1024) < 0) {
-        errx(1, "set_so_rcvbuf");
+    if (so_rcvbuf > 0) {
+        if (set_so_rcvbuf(sockfd, so_rcvbuf) < 0) {
+            errx(1, "set_so_rcvbuf");
+        }
     }
+
     if (debug) {
-        rcvbuf = get_so_rcvbuf(sockfd);
+        int rcvbuf = get_so_rcvbuf(sockfd);
         fprintf(stderr, "rcvbuf: %d\n", rcvbuf);
     }
     
