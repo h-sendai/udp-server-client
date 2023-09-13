@@ -41,7 +41,6 @@ unsigned long get_seq_num(unsigned char *buf, int len)
 int main(int argc, char *argv[])
 {
     unsigned char read_buf[64*1024];
-    unsigned char write_buf[16];
     int c, n;
     unsigned long max_read_counter = 10000;
     unsigned long total_read_counter = 0;
@@ -100,7 +99,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "rcvbuf: %d\n", rcvbuf);
     }
     
-    //n = write(sockfd, write_buf, sizeof(write_buf));
     n = write(sockfd, &max_read_counter, sizeof(max_read_counter));
     if (n < 0) {
         err(1, "write for 1st packet");
