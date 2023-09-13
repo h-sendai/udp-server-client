@@ -135,7 +135,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "rcvbuf: %d\n", rcvbuf);
     }
     
-    n = write(sockfd, write_buf, sizeof(write_buf));
+    // n = write(sockfd, write_buf, sizeof(write_buf));
+    n = write(sockfd, &max_read_counter, sizeof(max_read_counter));
     if (n < 0) {
         err(1, "write for 1st packet");
     }
