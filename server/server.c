@@ -103,9 +103,15 @@ int main(int argc, char *argv[])
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
         fprintfwt(stderr, "access from: %s.  max_write_counter: %ld\n", remote_ip, max_write_counter);
         debug_print(stderr, "recvfrom() returns\n");
+        unsigned long *counter_p;
+        counter_p = (unsigned long *)read_buf;
+        max_write_counter = *counter_p;
+        if (debug) {
+            fprintf(stderr, "max_write_counter: %ld\n", max_write_counter);
+        }
 
-        for ( ; ; ) {
-            int k;
+        for (int i = 0; i < max_write_counter; ++i) {
+            // int k;
             if (write_counter == max_write_counter) {
                 break;
             }
