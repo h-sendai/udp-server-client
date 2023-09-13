@@ -101,6 +101,10 @@ int main(int argc, char *argv[])
         fprintfwt(stderr, "access from: %s.\n", remote_ip);
         debug_print(stderr, "recvfrom() returns\n");
 
+        if (connect(sockfd, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0) {
+            err(1, "connect");
+        }
+
         unsigned long *counter_p;
         counter_p         = (unsigned long *)read_buf;
         max_write_counter = *counter_p;
@@ -110,20 +114,13 @@ int main(int argc, char *argv[])
         }
 
         for (int i = 0; i < max_write_counter; ++i) {
-            // int k;
-            //if (write_counter == max_write_counter) {
-            //    break;
-            //}
-
-            //for (k = 0; k < 4; k ++) {
-                //int x = htonl(write_counter);
-                memcpy(&write_buf[0], &write_counter, sizeof(unsigned long));
-                m = sendto(sockfd, write_buf, write_buf_size, 0, (struct sockaddr *)&cliaddr, len);
-                if (m < 0) {
-                    err(1, "sendto");
-                }
-                write_counter ++;
-            //}
+            memcpy(&write_buf[0], &write_counter, sizeof(unsigned long));
+            m = write(sockfd, write_buf, write_buf_size);
+            if (m < 0) {
+                warn("write");
+                goto END;
+            }
+            write_counter ++;
             if (usleep_time > 0) {
                 if (use_bzsleep) {
                     bz_usleep(usleep_time);
@@ -135,11 +132,13 @@ int main(int argc, char *argv[])
         }
         fprintfwt(stderr, "write done: max_write_counter: %d\n", max_write_counter);
         
+END:
         if (close(sockfd) < 0) {
             err(1, "close");
         }
         write_counter = 0;
     }
         
+
     return 0;
 }
