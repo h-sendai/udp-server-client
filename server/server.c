@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         }
         char remote_ip[32];
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
-        fprintfwt(stderr, "access from: %s.\n", remote_ip);
+        fprintfwt(stderr, "access from: %s, bufsize: %d bytes\n", remote_ip, arg_to_server.bufsize);
         debug_print(stderr, "recvfrom() returns\n");
     
         write_buf_size = arg_to_server.bufsize;
