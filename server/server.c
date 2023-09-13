@@ -1,3 +1,4 @@
+#include <sys/prctl.h> /* for PR_SET_TIMERSLACK */
 #include <sys/time.h>
 
 #include <err.h>
@@ -66,6 +67,8 @@ int main(int argc, char *argv[])
 
     memset(&cliaddr, 0, sizeof(cliaddr));
     memset(&servaddr, 0, sizeof(servaddr));
+
+    prctl(PR_SET_TIMERSLACK, 1);
 
     /* iterative server.  after sending all udp, wait data from client again */
     for ( ; ; )  {
