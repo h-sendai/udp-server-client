@@ -21,7 +21,7 @@ int debug = 0;
 
 int usage()
 {
-    char msg[] = "Usage: server [-d] [-b bufsize] [-c max_write_counter] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
+    char msg[] = "Usage: server [-d] [-b bufsize] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
                  "default bufsize: 1024 bytes.  Allow k (kilo), m (mega) suffix\n"
                  "default port: 1234\n";
     fprintf(stderr, "%s", msg);
@@ -44,16 +44,13 @@ int main(int argc, char *argv[])
     int use_bzsleep = 0;
     int port = 1234;
 
-    while ( (c = getopt(argc, argv, "db:c:hp:s:z:")) != -1) {
+    while ( (c = getopt(argc, argv, "db:hp:s:z:")) != -1) {
         switch (c) {
             case 'd':
                 debug = 1;
                 break;
             case 'b':
                 write_buf_size = get_num(optarg);
-                break;
-            case 'c':
-                max_write_counter = get_num(optarg);
                 break;
             case 'h':
                 usage();
@@ -101,20 +98,22 @@ int main(int argc, char *argv[])
         }
         char remote_ip[32];
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
-        fprintfwt(stderr, "access from: %s.  max_write_counter: %ld\n", remote_ip, max_write_counter);
+        fprintfwt(stderr, "access from: %s.\n", remote_ip);
         debug_print(stderr, "recvfrom() returns\n");
+
         unsigned long *counter_p;
-        counter_p = (unsigned long *)read_buf;
+        counter_p         = (unsigned long *)read_buf;
         max_write_counter = *counter_p;
+
         if (debug) {
             fprintf(stderr, "max_write_counter: %ld\n", max_write_counter);
         }
 
         for (int i = 0; i < max_write_counter; ++i) {
             // int k;
-            if (write_counter == max_write_counter) {
-                break;
-            }
+            //if (write_counter == max_write_counter) {
+            //    break;
+            //}
 
             //for (k = 0; k < 4; k ++) {
                 //int x = htonl(write_counter);
