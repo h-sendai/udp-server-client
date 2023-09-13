@@ -19,7 +19,7 @@ volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-c max_read_count] [-p port] [-r rcvbuf] [-f]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-b bufsize (1024)] [-p port] [-r rcvbuf]\n");
     
     return 0;
 }
@@ -38,21 +38,30 @@ unsigned long get_seq_num(unsigned char *buf, int len)
     return s;
 }
 
+struct arg_to_server {
+    int bufsize;
+    int sleep_usec;
+    int bzsleep_usec;
+} arg_to_server;
+
 int main(int argc, char *argv[])
 {
     unsigned char read_buf[64*1024];
     int c, n;
-    unsigned long max_read_counter = 10000;
     unsigned long total_read_counter = 0;
     int port = 1234;
     unsigned long seq_num;
     char *server_ip_address;
     int so_rcvbuf = -1;
 
-    while ( (c = getopt(argc, argv, "c:dhp:r:")) != -1) {
+    arg_to_server.bufsize = 1024;
+    arg_to_server.sleep_usec = 0;
+    arg_to_server.bzsleep_usec = 0;
+
+    while ( (c = getopt(argc, argv, "b:dhp:r:s:S:")) != -1) {
         switch (c) {
-            case 'c':
-                max_read_counter = get_num(optarg);
+            case 'b':
+                arg_to_server.bufsize = get_num(optarg);
                 break;
             case 'd':
                 debug++;
@@ -65,6 +74,12 @@ int main(int argc, char *argv[])
                 break;
             case 'r':
                 so_rcvbuf = get_num(optarg);
+                break;
+            case 's':
+                arg_to_server.sleep_usec = get_num(optarg);
+                break;
+            case 'S':
+                arg_to_server.bzsleep_usec = get_num(optarg);
                 break;
             default:
                 break;
@@ -99,7 +114,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "rcvbuf: %d\n", rcvbuf);
     }
     
-    n = write(sockfd, &max_read_counter, sizeof(max_read_counter));
+    //n = write(sockfd, &max_read_counter, sizeof(max_read_counter));
+    n = write(sockfd, &arg_to_server, sizeof(arg_to_server));
     if (n < 0) {
         err(1, "write for 1st packet");
     }
@@ -115,11 +131,6 @@ int main(int argc, char *argv[])
     gettimeofday(&start, NULL);
     prev = start;
     for ( ; ; ) {
-        if (total_read_counter >= max_read_counter) {
-            /* >=: in case of drop */
-            exit(0);
-        }
-
         if (has_alarm) {
             has_alarm = 0;
 

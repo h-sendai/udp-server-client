@@ -29,41 +29,33 @@ int usage()
     return 0;
 }
 
+struct arg_to_server {
+    int bufsize;
+    int sleep_usec;
+    int bzsleep_usec;
+} arg_to_server;
+
 int main(int argc, char *argv[])
 {
-    unsigned char read_buf[64*1024];
     unsigned char *write_buf;
-    int write_buf_size = 1024;
+    int write_buf_size; //= 1024;
     int c, m, n;
     struct sockaddr_in cliaddr;
     struct sockaddr_in servaddr;
     socklen_t len;
-    unsigned long write_counter = 0;
-    unsigned long max_write_counter = 10000;
-    int usleep_time = 0;
-    int use_bzsleep = 0;
+    unsigned long seq_num = 0;
     int port = 1234;
 
-    while ( (c = getopt(argc, argv, "db:hp:s:z:")) != -1) {
+    while ( (c = getopt(argc, argv, "dhp:")) != -1) {
         switch (c) {
             case 'd':
                 debug = 1;
-                break;
-            case 'b':
-                write_buf_size = get_num(optarg);
                 break;
             case 'h':
                 usage();
                 exit(0);
             case 'p':
                 port = get_num(optarg);
-                break;
-            case 's':
-                usleep_time = get_num(optarg);
-                break;
-            case 'z':
-                usleep_time = get_num(optarg);
-                use_bzsleep = 1;
                 break;
             default:
                 break;
@@ -74,11 +66,6 @@ int main(int argc, char *argv[])
 
     memset(&cliaddr, 0, sizeof(cliaddr));
     memset(&servaddr, 0, sizeof(servaddr));
-
-    write_buf = malloc(write_buf_size);
-    if (write_buf == NULL) {
-        err(1, "malloc");
-    }
 
     /* iterative server.  after sending all udp, wait data from client again */
     for ( ; ; )  {
@@ -92,7 +79,7 @@ int main(int argc, char *argv[])
         }
 
         len = sizeof(cliaddr);
-        n = recvfrom(sockfd, read_buf, sizeof(read_buf), 0, (struct sockaddr *)&cliaddr, &len);
+        n = recvfrom(sockfd, &arg_to_server, sizeof(arg_to_server), 0, (struct sockaddr *)&cliaddr, &len);
         if (n < 0) {
             err(1, "recvfrom");
         }
@@ -100,43 +87,38 @@ int main(int argc, char *argv[])
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
         fprintfwt(stderr, "access from: %s.\n", remote_ip);
         debug_print(stderr, "recvfrom() returns\n");
+    
+        write_buf_size = arg_to_server.bufsize;
+        write_buf = malloc(write_buf_size);
+        if (write_buf == NULL) {
+            err(1, "malloc");
+        }
 
         if (connect(sockfd, (struct sockaddr *)&cliaddr, sizeof(cliaddr)) < 0) {
             err(1, "connect");
         }
 
-        unsigned long *counter_p;
-        counter_p         = (unsigned long *)read_buf;
-        max_write_counter = *counter_p;
-
-        if (debug) {
-            fprintf(stderr, "max_write_counter: %ld\n", max_write_counter);
-        }
-
-        for (int i = 0; i < max_write_counter; ++i) {
-            memcpy(&write_buf[0], &write_counter, sizeof(unsigned long));
+        for ( ; ; ) {
+            memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
             m = write(sockfd, write_buf, write_buf_size);
             if (m < 0) {
-                warn("write");
+                fprintfwt(stderr, "%s\n", strerror(errno));
                 goto END;
             }
-            write_counter ++;
-            if (usleep_time > 0) {
-                if (use_bzsleep) {
-                    bz_usleep(usleep_time);
-                }
-                else {
-                    usleep(usleep_time);
-                }
+            seq_num ++;
+            if (arg_to_server.sleep_usec > 0) {
+                usleep(arg_to_server.sleep_usec);
+            }
+            if (arg_to_server.bzsleep_usec > 0) {
+                bz_usleep(arg_to_server.bzsleep_usec);
             }
         }
-        fprintfwt(stderr, "write done: max_write_counter: %d\n", max_write_counter);
         
 END:
         if (close(sockfd) < 0) {
             err(1, "close");
         }
-        write_counter = 0;
+        seq_num = 0;
     }
         
 
