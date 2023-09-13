@@ -1,6 +1,7 @@
 SUBDIRS += client
 SUBDIRS += server
 SUBDIRS += epoll-client
+SUBDIRS += udp-read-trend
 
 .PHONY: $(SUBDIRS)
 
