@@ -153,12 +153,13 @@ int main(int argc, char *argv[])
             double interval_sec = interval.tv_sec + 0.000001*interval.tv_usec;
             double rate_Gbps = 8.0*(double)interval_read_bytes / interval_sec /1000.0/1000.0/1000.0;
 
-            fprintf(stderr, "%ld.%06ld %ld.%06ld read: %d bytes %.3f Gbps read_count: %d drop_count: %d\n",
+            fprintf(stdout, "%ld.%06ld %ld.%06ld read: %d bytes %.3f Gbps read_count: %d drop_count: %d\n",
                 elapsed.tv_sec, elapsed.tv_usec,
                 interval.tv_sec, interval.tv_usec,
                 interval_read_bytes, 
                 rate_Gbps,
                 interval_read_counter, interval_drop_counter);
+            fflush(stdout);
 
             interval_read_counter = 0;
             interval_read_bytes   = 0;
