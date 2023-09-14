@@ -10,6 +10,7 @@ OBJS += my_signal.o
 OBJS += my_socket.o
 OBJS += readn.o
 OBJS += set_timer.o
+OBJS += set_cpu.o
 
 OBJS += $(PROG).o
 

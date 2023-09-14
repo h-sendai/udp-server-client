@@ -13,13 +13,14 @@
 #include "my_socket.h"
 #include "readn.h"
 #include "set_timer.h"
+#include "set_cpu.h"
 
 int debug = 0;
 volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-b bufsize (1024)] [-p port] [-r rcvbuf]\n");
+    fprintf(stderr, "Usage: ./client ip_address [-b bufsize (1024)] [-c cpu_num (none)] [-p port (1234)] [-r rcvbuf (none)]\n");
     
     return 0;
 }
@@ -53,15 +54,19 @@ int main(int argc, char *argv[])
     unsigned long seq_num;
     char *server_ip_address;
     int so_rcvbuf = -1;
+    int cpu_num   = -1;
 
     arg_to_server.bufsize = 1024;
     arg_to_server.sleep_usec = 0;
     arg_to_server.bzsleep_usec = 0;
 
-    while ( (c = getopt(argc, argv, "b:dhp:r:s:S:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:dhp:r:s:S:")) != -1) {
         switch (c) {
             case 'b':
                 arg_to_server.bufsize = get_num(optarg);
+                break;
+            case 'c':
+                cpu_num = get_num(optarg);
                 break;
             case 'd':
                 debug++;
@@ -93,6 +98,10 @@ int main(int argc, char *argv[])
     }
 
     server_ip_address = argv[0];
+
+    if (set_cpu(cpu_num) < 0) {
+        errx(1, "set_cpu");
+    }
 
     int sockfd = udp_socket();
     if (sockfd < 0) {
