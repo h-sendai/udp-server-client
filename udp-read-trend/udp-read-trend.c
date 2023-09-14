@@ -99,8 +99,10 @@ int main(int argc, char *argv[])
 
     server_ip_address = argv[0];
 
-    if (set_cpu(cpu_num) < 0) {
-        errx(1, "set_cpu");
+    if (cpu_num != -1) {
+        if (set_cpu(cpu_num) < 0) {
+            errx(1, "set_cpu");
+        }
     }
 
     int sockfd = udp_socket();
