@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
     struct sockaddr_in cliaddr;
     struct sockaddr_in servaddr;
     socklen_t len;
-    unsigned long seq_num = 0;
     int port = 1234;
 
     while ( (c = getopt(argc, argv, "dhp:")) != -1) {
@@ -101,6 +100,7 @@ int main(int argc, char *argv[])
             err(1, "connect");
         }
 
+        unsigned long seq_num = 0;
         for ( ; ; ) {
             memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
             m = write(sockfd, write_buf, write_buf_size);
@@ -121,7 +121,6 @@ END:
         if (close(sockfd) < 0) {
             err(1, "close");
         }
-        seq_num = 0;
     }
         
 
