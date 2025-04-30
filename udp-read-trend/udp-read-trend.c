@@ -131,9 +131,9 @@ int main(int argc, char *argv[])
         err(1, "write for 1st packet");
     }
 
-    int interval_read_counter = 0;
-    int interval_read_bytes   = 0;
-    int interval_drop_counter = 0;
+    unsigned long interval_read_counter = 0;
+    unsigned long interval_read_bytes   = 0;
+    unsigned long interval_drop_counter = 0;
 
     my_signal(SIGALRM, sig_alarm);
     set_timer(1, 0, 1, 0);
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
             double interval_sec = interval.tv_sec + 0.000001*interval.tv_usec;
             double rate_Gbps = 8.0*(double)interval_read_bytes / interval_sec /1000.0/1000.0/1000.0;
 
-            fprintf(stdout, "%ld.%06ld %ld.%06ld read: %d bytes %.3f Gbps read_count: %d drop_count: %d\n",
+            fprintf(stdout, "%ld.%06ld %ld.%06ld read: %ld bytes %.3f Gbps read_count: %ld drop_count: %ld\n",
                 elapsed.tv_sec, elapsed.tv_usec,
                 interval.tv_sec, interval.tv_usec,
                 interval_read_bytes, 
