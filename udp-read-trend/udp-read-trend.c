@@ -20,7 +20,19 @@ volatile sig_atomic_t has_alarm = 0;
 
 int usage(void)
 {
-    fprintf(stderr, "Usage: ./client ip_address [-b bufsize (1024)] [-c cpu_num (none)] [-p port (1234)] [-r rcvbuf (none)]\n");
+    char msg[] = 
+    "Usage: ./client ip_address [options]\n"
+    "Options:\n"
+    "    -b bufsize (1 k)\n"
+    "    -c cpu_num\n"
+    "    -p port (1234)\n"
+    "    -r rcvbuf\n"
+    "    -s sleep_usec\n"
+    "    -S bz_sleep_usec\n"
+    "bufsize, sleep_usec, bz_sleep_usec will be send to server\n"
+    ;
+
+    fprintf(stderr, "%s", msg);
     
     return 0;
 }
