@@ -102,7 +102,9 @@ int main(int argc, char *argv[])
 
         unsigned long seq_num = 0;
         for ( ; ; ) {
-            memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
+            //memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
+            unsigned long *long_p = (unsigned long *)&write_buf[0];
+            *long_p = seq_num;
             m = write(sockfd, write_buf, write_buf_size);
             if (m < 0) {
                 fprintfwt(stderr, "%s\n", strerror(errno));
