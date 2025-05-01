@@ -16,7 +16,10 @@
 #include "set_cpu.h"
 
 int debug = 0;
-volatile sig_atomic_t has_alarm = 0;
+volatile sig_atomic_t has_alarm  = 0;
+unsigned long total_read_bytes   = 0;
+unsigned long total_drop_counter = 0;
+struct timeval start;
 
 int usage(void)
 {
@@ -40,6 +43,21 @@ int usage(void)
 void sig_alarm(int signo)
 {
     has_alarm = 1;
+    return;
+}
+
+void sig_int(int signo)
+{
+    struct timeval now, running_time;
+    gettimeofday(&now, NULL);
+    timersub(&now, &start, &running_time);
+    double running_time_sec = running_time.tv_sec + 0.000001*running_time.tv_usec;
+    double read_rate_MB = (double) total_read_bytes / running_time_sec / 1024.0 / 1024.0;
+    double read_rate_Gb = (double) total_read_bytes * 8 / running_time_sec / 1000.0 / 1000.0 / 1000.0;
+    
+    fprintf(stderr, "# total_read_bytes: %ld bytes rate: %.3f MB/s %.3f Gbps total_drop_count: %ld\n",
+        total_read_bytes, read_rate_MB, read_rate_Gb, total_drop_counter);
+    exit(0);
     return;
 }
 
@@ -147,9 +165,10 @@ int main(int argc, char *argv[])
     unsigned long interval_read_bytes   = 0;
     unsigned long interval_drop_counter = 0;
 
+    my_signal(SIGINT,  sig_int);
     my_signal(SIGALRM, sig_alarm);
     set_timer(1, 0, 1, 0);
-    struct timeval start, now, elapsed, prev, interval;
+    struct timeval now, elapsed, prev, interval;
 
     gettimeofday(&start, NULL);
     prev = start;
@@ -190,6 +209,7 @@ AGAIN:
             }
         }
         interval_read_bytes += n;
+        total_read_bytes    += n;
         seq_num = get_seq_num(read_buf, n);
         if (total_read_counter != seq_num) {
             if (debug) {
@@ -197,6 +217,7 @@ AGAIN:
                     seq_num, total_read_counter);
             }
             interval_drop_counter += (seq_num - total_read_counter);
+            total_drop_counter    += (seq_num - total_read_counter);
             total_read_counter = seq_num;
         }
         total_read_counter ++;
