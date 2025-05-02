@@ -19,6 +19,7 @@ int debug = 0;
 volatile sig_atomic_t has_alarm  = 0;
 unsigned long total_read_bytes   = 0;
 unsigned long total_drop_counter = 0;
+unsigned long total_read_counter = 0;
 struct timeval start;
 
 int usage(void)
@@ -55,8 +56,8 @@ void sig_int(int signo)
     double read_rate_MB = (double) total_read_bytes / running_time_sec / 1024.0 / 1024.0;
     double read_rate_Gb = (double) total_read_bytes * 8 / running_time_sec / 1000.0 / 1000.0 / 1000.0;
     
-    fprintf(stderr, "# total_read_bytes: %ld bytes rate: %.3f MB/s %.3f Gbps total_drop_count: %ld\n",
-        total_read_bytes, read_rate_MB, read_rate_Gb, total_drop_counter);
+    fprintf(stderr, "# total_read_bytes: %ld bytes total_read_counter: %ld rate: %.3f MB/s %.3f Gbps total_drop_count: %ld\n",
+        total_read_bytes, total_read_counter, read_rate_MB, read_rate_Gb, total_drop_counter);
     exit(0);
     return;
 }
@@ -79,7 +80,6 @@ int main(int argc, char *argv[])
 {
     unsigned char read_buf[64*1024];
     int c, n;
-    unsigned long total_read_counter = 0;
     int port = 1234;
     unsigned long seq_num;
     char *server_ip_address;
