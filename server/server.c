@@ -22,8 +22,9 @@ int debug = 0;
 
 int usage()
 {
-    char msg[] = "Usage: server [-d] [-p port]\n"
-                 "default port: 1234\n"
+    char msg[] = "Usage: server [-d] [-p port] [-s sndbuf]\n"
+                 "-p port (default 1234)\n"
+                 "-s sndbuf (SO_SNDBUF size)\n"
                  "write() buffer size will be requested by client\n";
     fprintf(stderr, "%s", msg);
 
