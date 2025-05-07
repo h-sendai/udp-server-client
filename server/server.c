@@ -22,9 +22,9 @@ int debug = 0;
 
 int usage()
 {
-    char msg[] = "Usage: server [-d] [-b bufsize] [-p port] [-s sleep_usec] [-z bzsleep_usec]\n"
-                 "default bufsize: 1024 bytes.  Allow k (kilo), m (mega) suffix\n"
-                 "default port: 1234\n";
+    char msg[] = "Usage: server [-d] [-p port]\n"
+                 "default port: 1234\n"
+                 "write() buffer size will be requested by client\n";
     fprintf(stderr, "%s", msg);
 
     return 0;
