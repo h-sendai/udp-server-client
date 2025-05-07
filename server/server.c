@@ -45,8 +45,9 @@ int main(int argc, char *argv[])
     struct sockaddr_in servaddr;
     socklen_t len;
     int port = 1234;
+    int sndbuf_size = 0;
 
-    while ( (c = getopt(argc, argv, "dhp:")) != -1) {
+    while ( (c = getopt(argc, argv, "dhp:s:")) != -1) {
         switch (c) {
             case 'd':
                 debug = 1;
@@ -56,6 +57,9 @@ int main(int argc, char *argv[])
                 exit(0);
             case 'p':
                 port = get_num(optarg);
+                break;
+            case 's':
+                sndbuf_size = get_num(optarg);
                 break;
             default:
                 break;
@@ -89,6 +93,14 @@ int main(int argc, char *argv[])
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
         fprintfwt(stderr, "access from: %s, bufsize: %d bytes\n", remote_ip, arg_to_server.bufsize);
         debug_print(stderr, "recvfrom() returns\n");
+        
+        if (sndbuf_size > 0) {
+            if (set_so_sndbuf(sockfd, sndbuf_size) < 0) {
+                errx(1, "set_so_sendbuf");
+            }
+        }
+        int sndbuf = get_so_sndbuf(sockfd);
+        debug_print(stderr, "sndbuf: %d bytes\n", sndbuf);
     
         write_buf_size = arg_to_server.bufsize;
         write_buf = malloc(write_buf_size);
