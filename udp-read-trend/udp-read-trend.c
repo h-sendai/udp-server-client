@@ -25,10 +25,11 @@ struct timeval start;
 int usage(void)
 {
     char msg[] = 
-    "Usage: ./client ip_address [options]\n"
+    "Usage: ./udp-read-trend ip_address [options]\n"
     "Options:\n"
     "    -b bufsize (1 k)\n"
     "    -c cpu_num\n"
+    "    -i interval_sec\n (1.0 sec)\n"
     "    -p port (1234)\n"
     "    -r rcvbuf\n"
     "    -s sleep_usec\n"
@@ -85,12 +86,14 @@ int main(int argc, char *argv[])
     char *server_ip_address;
     int so_rcvbuf = -1;
     int cpu_num   = -1;
+    struct timeval tv_interval = { 1, 0 };
+    char *tv_interval_s = NULL;
 
     arg_to_server.bufsize = 1024;
     arg_to_server.sleep_usec = 0;
     arg_to_server.bzsleep_usec = 0;
 
-    while ( (c = getopt(argc, argv, "b:c:dhp:r:s:S:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:dhi:p:r:s:S:")) != -1) {
         switch (c) {
             case 'b':
                 arg_to_server.bufsize = get_num(optarg);
@@ -104,6 +107,9 @@ int main(int argc, char *argv[])
             case 'h':
                 usage();
                 exit(0);
+            case 'i':
+                tv_interval_s = optarg;
+                break;
             case 'p':
                 port = get_num(optarg);
                 break;
@@ -167,7 +173,15 @@ int main(int argc, char *argv[])
 
     my_signal(SIGINT,  sig_int);
     my_signal(SIGALRM, sig_alarm);
-    set_timer(1, 0, 1, 0);
+    if (tv_interval_s != NULL) {
+        tv_interval = str2timeval(tv_interval_s);
+    }
+    if (debug) {
+        fprintf(stderr, "tv_interval.tv_sec:  %ld\n", tv_interval.tv_sec);
+        fprintf(stderr, "tv_interval.tv_usec: %ld\n", tv_interval.tv_usec);
+    }
+
+    set_timer(tv_interval.tv_sec, tv_interval.tv_usec, tv_interval.tv_sec, tv_interval.tv_usec);
     struct timeval now, elapsed, prev, interval;
 
     gettimeofday(&start, NULL);
