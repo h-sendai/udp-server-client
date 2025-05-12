@@ -144,15 +144,10 @@ int main(int argc, char *argv[])
             //memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
             unsigned long *long_p = (unsigned long *)&write_buf[0];
             *long_p = seq_num;
-            m = write(sockfd, write_buf, write_buf_size);
+            m = writen(sockfd, write_buf, write_buf_size);
             if (m < 0) {
-                if (errno == EINTR) {
-                    continue;
-                }
-                else {
-                    fprintfwt(stderr, "%s\n", strerror(errno));
-                    goto END;
-                }
+                fprintfwt(stderr, "%s\n", strerror(errno));
+                goto END;
             }
             seq_num ++;
             interval_write_count ++;
