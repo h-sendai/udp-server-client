@@ -19,16 +19,24 @@
 #include "logUtil.h"
 
 int debug = 0;
+volatile sig_atomic_t has_alarm = 0;
 
 int usage()
 {
-    char msg[] = "Usage: server [-d] [-p port] [-s sndbuf]\n"
+    char msg[] = "Usage: server [-d] [-l] [-p port] [-s sndbuf]\n"
+                 "-l print write count\n"
                  "-p port (default 1234)\n"
                  "-s sndbuf (SO_SNDBUF size)\n"
                  "write() buffer size will be requested by client\n";
     fprintf(stderr, "%s", msg);
 
     return 0;
+}
+
+void sig_alarm(int signo)
+{
+    has_alarm = 1;
+    return;
 }
 
 struct arg_to_server {
@@ -47,8 +55,9 @@ int main(int argc, char *argv[])
     socklen_t len;
     int port = 1234;
     int sndbuf_size = 0;
+    int print_write_count = 0;
 
-    while ( (c = getopt(argc, argv, "dhp:s:")) != -1) {
+    while ( (c = getopt(argc, argv, "dhlp:s:")) != -1) {
         switch (c) {
             case 'd':
                 debug = 1;
@@ -56,6 +65,9 @@ int main(int argc, char *argv[])
             case 'h':
                 usage();
                 exit(0);
+            case 'l':
+                print_write_count = 1;
+                break;
             case 'p':
                 port = get_num(optarg);
                 break;
@@ -113,8 +125,22 @@ int main(int argc, char *argv[])
             err(1, "connect");
         }
 
-        unsigned long seq_num = 0;
+        unsigned long seq_num              = 0;
+        unsigned long interval_write_count = 0;
+        struct timeval start, elapsed, now;
+        gettimeofday(&start, NULL);
+        my_signal(SIGALRM, sig_alarm);
+        set_timer(1, 0, 1, 0);
         for ( ; ; ) {
+            if (has_alarm) {
+                has_alarm = 0;
+                gettimeofday(&now, NULL);
+                timersub(&now, &start, &elapsed);
+                if (print_write_count) {
+                    printf("%ld.%06ld write_count: %ld\n", elapsed.tv_sec, elapsed.tv_usec, interval_write_count);
+                }
+                interval_write_count = 0;
+            }
             //memcpy(&write_buf[0], &seq_num, sizeof(seq_num));
             unsigned long *long_p = (unsigned long *)&write_buf[0];
             *long_p = seq_num;
@@ -124,6 +150,7 @@ int main(int argc, char *argv[])
                 goto END;
             }
             seq_num ++;
+            interval_write_count ++;
             if (arg_to_server.sleep_usec > 0) {
                 usleep(arg_to_server.sleep_usec);
             }
@@ -136,6 +163,7 @@ END:
         if (close(sockfd) < 0) {
             err(1, "close");
         }
+        set_timer(0, 0, 0, 0);
     }
         
 
