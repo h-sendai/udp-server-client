@@ -25,7 +25,7 @@ readn(int fd, void *vptr, size_t n)
 }
 
 ssize_t                     /* Write "n" bytes to a descriptor. */
-writen(int fd, void *vptr, size_t n)
+writen(int fd, const void *vptr, size_t n)
 {
     size_t      nleft;
     ssize_t     nwritten;
