@@ -146,8 +146,13 @@ int main(int argc, char *argv[])
             *long_p = seq_num;
             m = write(sockfd, write_buf, write_buf_size);
             if (m < 0) {
-                fprintfwt(stderr, "%s\n", strerror(errno));
-                goto END;
+                if (errno == EINTR) {
+                    continue;
+                }
+                else {
+                    fprintfwt(stderr, "%s\n", strerror(errno));
+                    goto END;
+                }
             }
             seq_num ++;
             interval_write_count ++;
