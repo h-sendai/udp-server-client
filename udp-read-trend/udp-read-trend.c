@@ -212,9 +212,15 @@ int main(int argc, char *argv[])
             
         }
 
-        n = readn(sockfd, read_buf, sizeof(read_buf));
+AGAIN:
+        n = read(sockfd, read_buf, sizeof(read_buf));
         if (n < 0) {
-            err(1, "read");
+            if (errno == EINTR) {
+                goto AGAIN;
+            }
+            else {
+                err(1, "read");
+            }
         }
         interval_read_bytes += n;
         total_read_bytes    += n;
