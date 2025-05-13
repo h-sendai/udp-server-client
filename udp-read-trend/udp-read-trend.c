@@ -212,15 +212,11 @@ int main(int argc, char *argv[])
             
         }
 
-AGAIN:
-        n = read(sockfd, read_buf, sizeof(read_buf));
+        n = readn(sockfd, read_buf, arg_to_server.bufsize);
         if (n < 0) {
-            if (errno == EINTR) {
-                goto AGAIN;
-            }
-            else {
-                err(1, "read");
-            }
+            /* Process read() error only */
+            /* EINTR will be treated in readn() function */
+            err(1, "read");
         }
         interval_read_bytes += n;
         total_read_bytes    += n;
