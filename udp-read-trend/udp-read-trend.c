@@ -14,6 +14,7 @@
 #include "readn.h"
 #include "set_timer.h"
 #include "set_cpu.h"
+#include "logUtil.h"
 
 int debug = 0;
 volatile sig_atomic_t has_alarm  = 0;
@@ -184,6 +185,7 @@ int main(int argc, char *argv[])
     set_timer(tv_interval.tv_sec, tv_interval.tv_usec, tv_interval.tv_sec, tv_interval.tv_usec);
     struct timeval now, elapsed, prev, interval;
 
+    fprintfwt(stdout, "program start\n");
     gettimeofday(&start, NULL);
     prev = start;
     for ( ; ; ) {

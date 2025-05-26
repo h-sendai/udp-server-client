@@ -11,6 +11,7 @@ OBJS += my_socket.o
 OBJS += readn.o
 OBJS += set_timer.o
 OBJS += set_cpu.o
+OBJS += logUtil.o
 
 OBJS += $(PROG).o
 
