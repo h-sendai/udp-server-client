@@ -182,11 +182,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "tv_interval.tv_usec: %ld\n", tv_interval.tv_usec);
     }
 
-    set_timer(tv_interval.tv_sec, tv_interval.tv_usec, tv_interval.tv_sec, tv_interval.tv_usec);
-    struct timeval now, elapsed, prev, interval;
-
     int rcvbuf = get_so_rcvbuf(sockfd);
     fprintfwt(stdout, "program start (rcvbuf: %d bytes)\n", rcvbuf);
+
+    set_timer(tv_interval.tv_sec, tv_interval.tv_usec, tv_interval.tv_sec, tv_interval.tv_usec);
+    struct timeval now, elapsed, prev, interval;
     gettimeofday(&start, NULL);
     prev = start;
     for ( ; ; ) {
