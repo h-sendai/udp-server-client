@@ -17,6 +17,7 @@
 #include "bz_usleep.h"
 #include "debug_print.h"
 #include "logUtil.h"
+#include "set_cpu.h"
 
 int debug = 0;
 volatile sig_atomic_t has_alarm = 0;
@@ -56,9 +57,13 @@ int main(int argc, char *argv[])
     int port = 1234;
     int sndbuf_size = 0;
     int print_write_count = 0;
+    int cpu_num = -1;
 
-    while ( (c = getopt(argc, argv, "dhlp:s:")) != -1) {
+    while ( (c = getopt(argc, argv, "c:dhlp:s:")) != -1) {
         switch (c) {
+            case 'c':
+                cpu_num = strtol(optarg, NULL, 0);
+                break;
             case 'd':
                 debug = 1;
                 break;
@@ -85,6 +90,11 @@ int main(int argc, char *argv[])
     memset(&servaddr, 0, sizeof(servaddr));
 
     prctl(PR_SET_TIMERSLACK, 1);
+    if (cpu_num != -1) {
+        if (set_cpu(cpu_num) < 0) {
+            errx(1, "set_cpu: %d", cpu_num);
+        }
+    }
 
     /* iterative server.  after sending all udp, wait data from client again */
     for ( ; ; )  {
