@@ -23,6 +23,12 @@ unsigned long total_drop_counter = 0;
 unsigned long total_read_counter = 0;
 struct timeval start;
 
+struct arg_to_server {
+    int bufsize;
+    int sleep_usec;
+    int bzsleep_usec;
+} arg_to_server;
+
 int usage(void)
 {
     char msg[] = 
@@ -58,8 +64,8 @@ void sig_int(int signo)
     double read_rate_MB = (double) total_read_bytes / running_time_sec / 1024.0 / 1024.0;
     double read_rate_Gb = (double) total_read_bytes * 8 / running_time_sec / 1000.0 / 1000.0 / 1000.0;
     
-    fprintf(stderr, "# running_time: %.6f sec total_read_bytes: %ld bytes total_read_counter: %ld rate: %.3f MB/s %.3f Gbps total_drop_count: %ld\n",
-        running_time_sec, total_read_bytes, total_read_counter, read_rate_MB, read_rate_Gb, total_drop_counter);
+    fprintf(stderr, "# running_time: %.6f sec buf: %d bytes total_read_bytes: %ld bytes total_read_counter: %ld rate: %.3f MB/s %.3f Gbps total_drop_count: %ld\n",
+        running_time_sec, arg_to_server.bufsize, total_read_bytes, total_read_counter, read_rate_MB, read_rate_Gb, total_drop_counter);
     exit(0);
     return;
 }
@@ -71,12 +77,6 @@ unsigned long get_seq_num(unsigned char *buf, int len)
 
     return s;
 }
-
-struct arg_to_server {
-    int bufsize;
-    int sleep_usec;
-    int bzsleep_usec;
-} arg_to_server;
 
 int main(int argc, char *argv[])
 {
