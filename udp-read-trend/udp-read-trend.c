@@ -30,7 +30,7 @@ int usage(void)
     "Options:\n"
     "    -b bufsize (1 k)\n"
     "    -c cpu_num\n"
-    "    -i interval_sec\n (1.0 sec)\n"
+    "    -i interval_sec (1.0 sec)\n"
     "    -p port (1234)\n"
     "    -r rcvbuf\n"
     "    -s sleep_usec\n"
