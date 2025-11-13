@@ -185,7 +185,8 @@ int main(int argc, char *argv[])
     set_timer(tv_interval.tv_sec, tv_interval.tv_usec, tv_interval.tv_sec, tv_interval.tv_usec);
     struct timeval now, elapsed, prev, interval;
 
-    fprintfwt(stdout, "program start\n");
+    int rcvbuf = get_so_rcvbuf(sockfd);
+    fprintfwt(stdout, "program start (rcvbuf: %d bytes)\n", rcvbuf);
     gettimeofday(&start, NULL);
     prev = start;
     for ( ; ; ) {
