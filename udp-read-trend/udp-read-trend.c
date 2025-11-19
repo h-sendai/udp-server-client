@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <sys/time.h>
 
 #include <err.h>
@@ -6,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include "get_num.h"
 #include "host_info.h"
@@ -36,6 +38,7 @@ int usage(void)
     "Options:\n"
     "    -b bufsize (1 k)\n"
     "    -c cpu_num\n"
+    "    -C log if running cpu has been changed\n"
     "    -i interval_sec (1.0 sec)\n"
     "    -p port (1234)\n"
     "    -r rcvbuf\n"
@@ -87,6 +90,7 @@ int main(int argc, char *argv[])
     char *server_ip_address;
     int so_rcvbuf = -1;
     int cpu_num   = -1;
+    int log_cpu_change = 0;
     struct timeval tv_interval = { 1, 0 };
     char *tv_interval_s = NULL;
 
@@ -94,13 +98,16 @@ int main(int argc, char *argv[])
     arg_to_server.sleep_usec = 0;
     arg_to_server.bzsleep_usec = 0;
 
-    while ( (c = getopt(argc, argv, "b:c:dhi:p:r:s:S:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:Cdhi:p:r:s:S:")) != -1) {
         switch (c) {
             case 'b':
                 arg_to_server.bufsize = get_num(optarg);
                 break;
             case 'c':
                 cpu_num = get_num(optarg);
+                break;
+            case 'C':
+                log_cpu_change = 1;
                 break;
             case 'd':
                 debug++;
@@ -189,6 +196,15 @@ int main(int argc, char *argv[])
     struct timeval now, elapsed, prev, interval;
     gettimeofday(&start, NULL);
     prev = start;
+
+    int run_cpu_prev = -1;
+    int run_cpu_curr = -1;
+    if (log_cpu_change) {
+        run_cpu_prev = sched_getcpu();
+        run_cpu_curr = run_cpu_prev;
+        fprintf(stdout, "# 0.000000 cpu %d\n", run_cpu_curr);
+    }
+
     for ( ; ; ) {
         if (has_alarm) {
             has_alarm = 0;
@@ -213,6 +229,17 @@ int main(int argc, char *argv[])
             interval_read_bytes   = 0;
             interval_drop_counter = 0;
             
+        }
+
+        if (log_cpu_change) {
+            run_cpu_curr = sched_getcpu();
+            if (run_cpu_curr != run_cpu_prev) {
+                struct timeval now, elapsed;
+                gettimeofday(&now, NULL);
+                timersub(&now, &start, &elapsed);
+                fprintf(stdout, "# %ld.%06ld cpu: %d\n", elapsed.tv_sec, elapsed.tv_usec, run_cpu_curr);
+                run_cpu_prev = run_cpu_curr;
+            }
         }
 
         n = readn(sockfd, read_buf, arg_to_server.bufsize);
