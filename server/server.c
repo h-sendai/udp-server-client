@@ -15,6 +15,7 @@
 #include "readn.h"
 #include "set_timer.h"
 #include "bz_usleep.h"
+#include "bz_nanosleep.h"
 #include "debug_print.h"
 #include "logUtil.h"
 #include "set_cpu.h"
@@ -44,6 +45,7 @@ struct arg_to_server {
     int bufsize;
     int sleep_usec;
     int bzsleep_usec;
+    long bzsleep_nsec;
 } arg_to_server;
 
 int main(int argc, char *argv[])
@@ -116,11 +118,12 @@ int main(int argc, char *argv[])
         inet_ntop(AF_INET, (struct sockaddr *)&cliaddr.sin_addr, remote_ip, sizeof(remote_ip));
 
         fprintfwt(stderr,
-            "access from: %s, bufsize: %d bytes, usleep: %d usec, bz_usleep: %d usec\n",
+            "access from: %s, bufsize: %d bytes, usleep: %d usec, bz_usleep: %d usec, bz_nanosleep: %ld\n",
             remote_ip,
             arg_to_server.bufsize,
             arg_to_server.sleep_usec,
-            arg_to_server.bzsleep_usec
+            arg_to_server.bzsleep_usec,
+            arg_to_server.bzsleep_nsec
         );
         debug_print(stderr, "recvfrom() returns\n");
         
@@ -173,6 +176,9 @@ int main(int argc, char *argv[])
             }
             if (arg_to_server.bzsleep_usec > 0) {
                 bz_usleep(arg_to_server.bzsleep_usec);
+            }
+            if (arg_to_server.bzsleep_nsec > 0) {
+                bz_nanosleep(arg_to_server.bzsleep_nsec);
             }
         }
         

@@ -11,6 +11,7 @@ OBJS += my_socket.o
 OBJS += readn.o
 OBJS += set_timer.o
 OBJS += bz_usleep.o
+OBJS += bz_nanosleep.o
 OBJS += debug_print.o
 OBJS += logUtil.o
 OBJS += set_cpu.o

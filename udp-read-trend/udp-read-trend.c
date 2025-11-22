@@ -29,6 +29,7 @@ struct arg_to_server {
     int bufsize;
     int sleep_usec;
     int bzsleep_usec;
+    long bzsleep_nsec;
 } arg_to_server;
 
 int usage(void)
@@ -44,7 +45,8 @@ int usage(void)
     "    -r rcvbuf\n"
     "    -s sleep_usec\n"
     "    -S bz_sleep_usec\n"
-    "bufsize, sleep_usec, bz_sleep_usec will be send to server\n"
+    "    -N bz_sleep_nsec\n"
+    "bufsize, sleep_usec, bz_sleep_usec bz_sleep_nsec will be send to server\n"
     ;
 
     fprintf(stderr, "%s", msg);
@@ -97,8 +99,9 @@ int main(int argc, char *argv[])
     arg_to_server.bufsize = 1024;
     arg_to_server.sleep_usec = 0;
     arg_to_server.bzsleep_usec = 0;
+    arg_to_server.bzsleep_nsec = 0;
 
-    while ( (c = getopt(argc, argv, "b:c:Cdhi:p:r:s:S:")) != -1) {
+    while ( (c = getopt(argc, argv, "b:c:Cdhi:p:r:s:S:N:")) != -1) {
         switch (c) {
             case 'b':
                 arg_to_server.bufsize = get_num(optarg);
@@ -129,6 +132,9 @@ int main(int argc, char *argv[])
                 break;
             case 'S':
                 arg_to_server.bzsleep_usec = get_num(optarg);
+                break;
+            case 'N':
+                arg_to_server.bzsleep_nsec = get_num(optarg);
                 break;
             default:
                 break;
